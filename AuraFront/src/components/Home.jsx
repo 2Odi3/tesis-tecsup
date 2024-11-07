@@ -15,7 +15,6 @@ function Home() {
     const profesorId = localStorage.getItem('userId');
     const [upcomingCourses, setupcomingCourses] = useState(null);
 
-
     useEffect(() => {
         const request = {
             profesorId: profesorId,
@@ -242,13 +241,13 @@ function Home() {
     };
 
     useEffect(() => {
-        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        const tooltipTriggerList = Array.from(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
         const tooltipList = tooltipTriggerList.map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
-
+    
         return () => {
             tooltipList.forEach(tooltip => tooltip.dispose());
         };
-    }, []);
+    }, [upcomingCourses]);
 
     const limitedUpcomingCourses = Array.isArray(upcomingCourses) ? upcomingCourses.slice(0, 4) : [];
 

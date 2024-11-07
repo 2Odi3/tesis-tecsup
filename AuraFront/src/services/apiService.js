@@ -172,3 +172,53 @@ export const obtenerPorcentajeFaltas = async (enviar) => {
   }
 };
 
+// Obtener fechas de asistencia
+export const getFechasAsistencia = async (profesorId, cursoId) => {
+  try {
+    const response = await fetch(`${API_URL}/asistencia/fechas`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ profesor_id: profesorId, curso_id: cursoId }),
+    });
+
+    if (!response.ok) {
+      throw new Error('Error al obtener fechas de asistencia');
+    }
+
+    const data = await response.json();
+
+    if (data.fechas) {
+      return data.fechas;
+    } else {
+      throw new Error('Fechas no encontradas');
+    }
+  } catch (error) {
+    throw new Error(error.message || 'Error al conectarse con el servidor');
+  }
+};
+
+// Registrar asistencia
+export const registrarAsistencia = async (data) => {
+  try {
+    const response = await fetch(`${API_URL}/asistencia/registrar`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Error al registrar asistencia: ${response.status} - ${errorText}`);
+    }
+
+    const responseData = await response.json();
+
+    if (responseData.message === 'Asistencia registrada correctamente') {
+      return responseData.asistencias;
+    } else {
+      throw new Error('Error al registrar asistencia');
+    }
+  } catch (error) {
+    throw new Error(error.message || 'Error al conectarse con el servidor');
+  }
+};

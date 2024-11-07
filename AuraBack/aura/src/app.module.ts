@@ -20,6 +20,7 @@ import { Seccion } from './entities/seccion/seccion.entity';
 import { CursoModule } from './modules/curso/curso.module';
 import { ProfesorModule } from './modules/profesor/profesor.module';
 import { AsistenciaModule } from './modules/asistencia/asistencia.module';
+import { RecognitionModule } from './modules/recognition/recognition.module';
 
 @Module({
   imports: [
@@ -46,7 +47,8 @@ import { AsistenciaModule } from './modules/asistencia/asistencia.module';
     }),
     CursoModule,
     ProfesorModule,
-    AsistenciaModule
+    AsistenciaModule,
+    RecognitionModule
   ],
   controllers: [AppController],
   providers: [AppService],

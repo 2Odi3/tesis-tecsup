@@ -2,13 +2,12 @@ import React, { useEffect, useState } from 'react';
 import Navbar from "../Navbar";
 import NavbarHeader from '../NavbarHeader';
 import { Link, useParams } from 'react-router-dom';
-import { getAsistencias, updateAsistencias, getCursoById } from '../../services/apiService';
+import { getAsistencias, updateAsistencias, getCursoById, getFechasAsistencia } from '../../services/apiService';
 import { addWeeks } from 'date-fns';
 import { formatInTimeZone } from 'date-fns-tz';
 import { decryptId } from '../../utils/cryptoUtils';
 import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
-
 
 const CourseAsistance = () => {
   const { idCurso, idProfesor } = useParams();

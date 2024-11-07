@@ -36,9 +36,9 @@ const NavbarHeader = () => {
   return (
     <header className={`top-header ${theme}`}>
       <nav className="navbar navbar-expand gap-3">
-        <div className="toggle-icon" onClick={toggleMenu}>
+        {/* <div className="toggle-icon" onClick={toggleMenu}>
           <ion-icon name="menu-outline"></ion-icon>
-        </div>
+        </div> */}
         <form className="searchbar">
           <div className="position-absolute top-50 translate-middle-y search-icon ms-3">
             <ion-icon name="search-outline"></ion-icon>

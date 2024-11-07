@@ -1,7 +1,6 @@
 import { Controller, NotFoundException, Logger, Post, Body, HttpStatus, HttpException, BadRequestException, InternalServerErrorException, Patch } from '@nestjs/common';
 import { AsistenciaService } from './asistencia.service';
 import { Alumno } from 'src/entities/alumno/alumno.entitiy';
-import { RegisterAsistenciaDto } from './dto/create-asistencia.dto';
 import { Asistencia } from 'src/entities/asistencia/asistencia.entity';
 
 @Controller('asistencia')
@@ -39,23 +38,23 @@ export class AsistenciaController {
 
     //registrar asistencias
     @Post('registrar')
-    async registrarAsistencia(
-        @Body() registerAsistenciaDto: RegisterAsistenciaDto[]
-    ): Promise<{ message: string; asistentes: Asistencia[] }> {
+    async registrarAsistencia(@Body() body: { profesor_id: string; curso_id: string }) {
+        const { profesor_id, curso_id } = body;
+
         try {
-            this.logger.log("Se ha recibido una solicitud POST para registrar asistencias.");
-
-            const asistentes = await this.asistenciaService.registrarAsistencia(registerAsistenciaDto);
-
-            this.logger.log(`Se registraron ${asistentes.length} asistencias exitosamente.`);
-
-            return {
-                message: 'Asistencias registradas exitosamente',
-                asistentes,
-            };
+            // Llamada al servicio para registrar la asistencia
+            const asistencias = await this.asistenciaService.registrarAsistencia(profesor_id, curso_id);
+            return { message: 'Asistencia registrada correctamente', asistencias };
         } catch (error) {
-            this.logger.error('Error al registrar asistencias:', error);
-            throw new HttpException('Error al registrar las asistencias', HttpStatus.INTERNAL_SERVER_ERROR);
+            // Manejo de excepciones y reenvío con código y mensaje apropiado
+            if (error instanceof HttpException) {
+                throw error; // Si es un error HTTP, lanzamos directamente
+            }
+            // Si el error no es un HttpException, lanzamos un error genérico del servidor
+            throw new HttpException(
+                'Error interno del servidor',
+                HttpStatus.INTERNAL_SERVER_ERROR
+            );
         }
     }
 
@@ -93,6 +92,7 @@ export class AsistenciaController {
         }
     }
 
+    //actualizar asistencias
     @Patch('actualizar')
     async actualizarAsistencia(
         @Body() updateAsistenciaDto: {
@@ -158,18 +158,47 @@ export class AsistenciaController {
     //faltas por fecha
     @Post('faltas-fecha')
     async obtenerFaltasPorFecha(
-        @Body() body: { profesorId: string; cursoId: string }
-    ): Promise<{ fecha: string; faltas: number }[]> {
-        const { profesorId, cursoId } = body;
+        @Body() body: { profesorId: string; cursoId: string; fecha?: string }
+    ): Promise<{ fecha: string; faltas: number; asistencias: number }[]> {
+        const { profesorId, cursoId, fecha } = body;
 
         try {
-            const faltas = await this.asistenciaService.obtenerFaltasPorFecha(profesorId, cursoId);
-            return faltas; // Devolverá un array de objetos con fecha y faltas
+            const faltas = await this.asistenciaService.obtenerFaltasPorFecha(profesorId, cursoId, fecha);
+            return faltas;
         } catch (error) {
             if (error instanceof NotFoundException) {
                 throw new NotFoundException(error.message);
             }
             throw new Error('Error al obtener faltas');
+        }
+    }
+
+    //obtener fechas
+    @Post('fechas')
+    async obtenerFechasAsistencia(
+        @Body() body: { profesor_id: string, curso_id: string }
+    ): Promise<{ fechas: string[] }> {
+        try {
+            const { profesor_id, curso_id } = body;
+
+            // Verificamos si los datos necesarios están presentes
+            if (!profesor_id || !curso_id) {
+                throw new HttpException('Profesor o curso no especificado', HttpStatus.BAD_REQUEST);
+            }
+
+            // Llamamos al servicio para obtener las fechas de asistencia
+            const fechas = await this.asistenciaService.obtenerFechasAsistencia(profesor_id, curso_id);
+
+            // Retornamos las fechas obtenidas
+            return { fechas };
+        } catch (error) {
+            // Manejo de excepciones si algo falla
+            if (error instanceof HttpException) {
+                throw error; // Si la excepción es de tipo HttpException, la re-lanzamos
+            }
+
+            // Si no es una HttpException, lanzamos una nueva con un mensaje de error genérico
+            throw new HttpException('Error al obtener las fechas de asistencia', HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 }
