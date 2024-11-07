@@ -1,0 +1,11 @@
+{
+    "type": "mysql",
+    "host": "localhost",
+    "port": 3306,
+    "username": "root",
+    "password": "estela",
+    "database": "aura",
+    "synchronize": true,
+    "entities": ["dist/**/*.entity{.ts,.js}"]
+  }
+  

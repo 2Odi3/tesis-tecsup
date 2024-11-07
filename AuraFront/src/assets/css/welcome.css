@@ -1,0 +1,185 @@
+body {
+    font-family: 'Plus Jakarta Sans', 'Noto Sans', sans-serif;
+}
+
+@keyframes colorChange-icon-body {
+    0% { fill: #FFFFFF; }
+    25% { fill: #000000; }
+    50% { fill: #FFFFFF; }
+    75% { fill: #000000; }
+    100% { fill: #FFFFFF; }
+}
+
+@keyframes colorChange-icon-foot {
+    0% { fill: #000000; }
+    25% { fill: #FFFFFF; }
+    50% { fill: #005478; }
+    75% { fill: #FFFFFF; }
+    100% { fill: #000000; }
+}
+
+@keyframes colorChange-head-but-foot {
+    0% { background-color: #FFFFFF; color: #000000; }
+    25% { background-color: #000000; color: #FFFFFF; }
+    50% { background-color: #FFFFFF; color: #005478; }
+    75% { background-color: #000000; color: #FFFFFF; }
+    100% { background-color: #FFFFFF; color: #000000; }
+}
+
+@keyframes colorChange {
+    0% { background-color: #000000; color: #FFFFFF; }
+    25% { background-color: #FFFFFF; color: #000000; }
+    50% { background-color: #005478; color: #FFFFFF; }
+    75% { background-color: #FFFFFF; color: #000000; }
+    100% { background-color: #000000; color: #FFFFFF; }
+}
+
+.svgBody svg, .design-root, .footer, .headerWel, .footer{
+    animation-timing-function: linear;
+}
+
+.headerWel {
+    animation: colorChange-head-but-foot 10s steps(1) infinite;
+}
+
+.button {
+    animation: colorChange-head-but-foot 10s steps(1) infinite;
+    width: auto;
+}
+
+.footerLog {
+    width: 100%;
+    padding: 1rem;
+    background-color: #000000; 
+    color: #ffffff;
+    text-align: center;
+    font-size: 0.875rem;
+    margin-top: auto; /* Esto empuja el footer al final del contenedor flexible */
+    border: none;
+    box-sizing: border-box; 
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.footer {
+    width: 100%;
+    padding: 1rem;
+    background-color: #000000; 
+    color: #ffffff;
+    text-align: center;
+    font-size: 0.875rem;
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    margin: 0;
+    border: none;
+    box-sizing: border-box; 
+    animation: colorChange-head-but-foot 10s steps(1) infinite;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.sgvFooterLog {
+    fill: #ffff;
+    position: absolute;
+    left: 1rem;
+    width: 30px; 
+    height: 30px;
+}
+
+.sgvFooter {
+    animation: colorChange-icon-foot 10s steps(1) infinite;
+    position: absolute;
+    left: 1rem;
+    width: 30px; 
+    height: 30px;
+}
+
+.footer p {
+    margin: 0;
+    text-align: center;
+    flex-grow: 1; 
+}
+
+.svgBody svg {
+    animation: colorChange-icon-body 10s steps(1) infinite;
+    fill: #000000;
+    width: 450px;
+    height: 450px;
+}
+
+.design-root {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    animation: colorChange 10s steps(1) infinite;
+}
+
+.layout-container {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+}
+
+.headerWel {
+    padding-top: 5%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 3rem;
+}
+
+.headerWel h2 {
+    font-size: 1.25rem;
+    font-weight: bold;
+    letter-spacing: -0.015em;
+}
+
+.main-content {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: calc(100vh - 100px);
+    gap: 15rem;
+}
+
+.main-content h1 {
+    font-size: 6rem;
+    font-weight: 900;
+    letter-spacing: -0.033em;
+    text-align: center;
+}
+
+.main-content p {
+    font-size: 1rem;
+}
+
+.main-content strong {
+    font-size: 1.5rem;    
+}
+
+.main-content button {
+    background-color: #019863;
+    color: white;
+    font-weight: bold;
+    padding: 0.75rem 1.25rem;
+    border-radius: 9999px;
+}
+
+.main-content .image {
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: cover;
+    border-radius: 0.75rem;
+    width: 500px;
+    height: 700px;
+}
+
+body, html {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    height: 100%;
+}
