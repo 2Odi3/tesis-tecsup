@@ -1,4 +1,3 @@
-import Navbar from "./Navbar";
 import NavbarHeader from "./NavbarHeader";
 import { createLineChart, createBarChart } from "../hooks/stats";
 import React, { useEffect, useState } from 'react';

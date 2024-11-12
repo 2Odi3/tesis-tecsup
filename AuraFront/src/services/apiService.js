@@ -135,12 +135,19 @@ export const getAsistencias = async (params) => {
 };
 
 // Obtener faltas por fecha
-export const obtenerFaltasPorFecha = async (profesorId, cursoId) => {
+export const obtenerFaltasPorFecha = async (profesorId, cursoId, fecha = null) => {
   try {
+    const body = { profesorId, cursoId };
+    
+    // Solo añadir `fecha` si está definido
+    if (fecha) {
+      body.fecha = fecha;
+    }
+
     const response = await fetch(`${API_URL}/asistencia/faltas-fecha`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ profesorId, cursoId }),
+      body: JSON.stringify(body),
     });
 
     if (!response.ok) {
@@ -152,6 +159,7 @@ export const obtenerFaltasPorFecha = async (profesorId, cursoId) => {
     throw new Error(error.message || 'Error al conectarse con el servidor');
   }
 };
+
 
 // Obtener porcentaje de faltas
 export const obtenerPorcentajeFaltas = async (enviar) => {

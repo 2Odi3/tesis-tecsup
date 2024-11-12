@@ -1,10 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import Navbar from "../Navbar";
 import NavbarHeader from '../NavbarHeader';
 import { Link, useParams } from 'react-router-dom';
-import { getAsistencias, updateAsistencias, getCursoById, getFechasAsistencia } from '../../services/apiService';
-import { addWeeks } from 'date-fns';
-import { formatInTimeZone } from 'date-fns-tz';
+import { getAsistencias, updateAsistencias, getCursoById, getFechasAsistencia, obtenerFaltasPorFecha } from '../../services/apiService';
 import { decryptId } from '../../utils/cryptoUtils';
 import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
@@ -15,14 +12,28 @@ const CourseAsistance = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [curso, setCurso] = useState(null);
   const [fechas, setFechas] = useState([]);
-  const [selectedFecha, setSelectedFecha] = useState("");
+  const [selectedFecha, setSelectedFecha] = useState('');
   const [selectedSemana, setSelectedSemana] = useState(1);
   const [errorMessage, setErrorMessage] = useState(null);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm, setSearchTerm] = useState('');
   const [filter, setFilter] = useState('');
+  const [falta, setFalta] = useState('');
 
   const idCur = decryptId(idCurso);
   const idProf = decryptId(idProfesor);
+
+  useEffect(() => {
+    if (!selectedFecha) return;
+    const fetchFaltasFecha = async () => {
+      try {
+        const faltasFecha = await obtenerFaltasPorFecha(idProf, idCur, selectedFecha);
+        setFalta(faltasFecha);
+      } catch (error) {
+        console.error('Error al obtener las faltas:', error);
+      }
+    };
+    fetchFaltasFecha();
+  }, [selectedFecha, idProf, idCur]);
 
   useEffect(() => {
     const fetchCurso = async () => {
@@ -38,6 +49,41 @@ const CourseAsistance = () => {
   }, [idCur]);
 
   useEffect(() => {
+    const fetchInitialAsistencias = async () => {
+      try {
+        const json = {
+          fecha: "",
+          profesorId: idProf,
+          cursoId: idCur,
+        };
+
+        const response = await getAsistencias(json);
+        setAsistencias(response);
+
+        if (response.length > 0 && idProf && idCur) {
+          try {
+            const fechasData = await getFechasAsistencia(idProf, idCur);
+            setFechas(fechasData);
+
+            setSelectedFecha(fechasData[0]);
+            setSelectedSemana(1);
+          } catch (error) {
+            console.error("Error al obtener las fechas de asistencia:", error);
+          }
+        } else {
+          console.warn("ID del profesor o ID del curso no están definidos o no se encontraron asistencias iniciales");
+        }
+      } catch (error) {
+        console.error('Error al obtener las asistencias iniciales:', error);
+      }
+    };
+
+    fetchInitialAsistencias();
+  }, [idCur, idProf]);
+
+  useEffect(() => {
+    if (!idProf || !idCur) return;
+
     const fetchAsistencias = async () => {
       try {
         const response = await getAsistencias({
@@ -49,49 +95,14 @@ const CourseAsistance = () => {
         setErrorMessage(null);
       } catch (error) {
         console.error('Error al obtener las asistencias:', error);
-        if (error.message.includes("No se encontraron asistencias")) {
-          setErrorMessage("DATA NOT FOUND 404");
-        } else {
-          setErrorMessage("Error al obtener las asistencias");
-        }
+        setErrorMessage(error.message.includes("No se encontraron asistencias") ?
+          "DATA NOT FOUND 404" : "Error al obtener las asistencias");
       }
     };
 
-    if (selectedFecha) {
-      fetchAsistencias();
-    }
+    fetchAsistencias();
   }, [selectedFecha, idCur, idProf]);
 
-  useEffect(() => {
-    const fetchInitialAsistencias = async () => {
-      try {
-        const json = {
-          fecha: "",
-          profesorId: idProf,
-          cursoId: idCur,
-        };
-
-        const response = await getAsistencias(json);
-
-        setAsistencias(response);
-
-        if (response.length > 0) {
-          const initialDate = new Date(response[0].fecha);
-          const nextDates = Array.from({ length: 16 }, (_, i) => {
-            const nextDate = addWeeks(initialDate, i);
-            return formatInTimeZone(nextDate, 'America/Lima', 'yyyy-MM-dd');
-          });
-          setFechas(nextDates);
-          setSelectedFecha(nextDates[0]);
-          setSelectedSemana(1);
-        }
-      } catch (error) {
-        console.error('Error al obtener las asistencias iniciales:', error);
-      }
-    };
-
-    fetchInitialAsistencias();
-  }, [idCur, idProf]);
 
   const handleRadioChange = (id, asistio) => {
     setAsistencias(prev =>
@@ -107,18 +118,17 @@ const CourseAsistance = () => {
       asistio,
     }));
 
-    const formattedDate = selectedFecha || new Date().toISOString().split('T')[0];
-
     const camAsis = {
-      fecha: formattedDate,
+      fecha: selectedFecha,
       profesorId: idProf,
       cursoId: idCur,
       cambios,
     };
 
+    console.log(camAsis);
+
     try {
       const response = await updateAsistencias(camAsis);
-      console.log('Asistencias actualizadas:', response);
     } catch (error) {
       console.error('Error al actualizar asistencias:', error);
     }
@@ -181,6 +191,25 @@ const CourseAsistance = () => {
     });
   }
 
+  useEffect(() => {
+    const tooltipTriggerList = Array.from(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+
+    tooltipTriggerList.forEach(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
+
+    return () => {
+      tooltipTriggerList.forEach(tooltipTriggerEl => {
+        const tooltip = bootstrap.Tooltip.getInstance(tooltipTriggerEl);
+        if (tooltip) {
+          tooltip.dispose();
+        }
+      });
+    };
+  }, [falta]);
+
+  const filteredAndSortedAsistencias = filteredAsistencias.sort((a, b) => {
+    return a.alumno_id.nombre.localeCompare(b.alumno_id.nombre);
+  });
+  
   return (
     <div className="wrapper">
       <NavbarHeader />
@@ -310,9 +339,20 @@ const CourseAsistance = () => {
               ></i>
             </div>
 
-            <h6 className="text-center text-uppercase mb-0" style={{ fontSize: '1.5rem', flex: 1, textAlign: 'center' }}>
-              SEMANA {selectedSemanaCalculated}
-            </h6>
+            <div className="text-center text-uppercase mb-0 d-flex justify-content-center align-items-center" style={{ fontSize: '1.5rem', width: '1300px' }}>
+              <h6 className="mb-0" style={{ marginRight: '8px' }}>
+                SEMANA {selectedSemanaCalculated}
+              </h6>
+              {falta && falta.length > 0 && (
+                <i
+                  className='lni lni-question-circle'
+                  style={{ fontSize: '0.9rem' }}
+                  data-bs-toggle="tooltip"
+                  data-bs-placement="right"
+                  data-bs-original-title={`Asistencias: ${falta[0].asistencias} - Faltas: ${falta[0].faltas}`}
+                ></i>
+              )}
+            </div>
 
             <input
               type="text"

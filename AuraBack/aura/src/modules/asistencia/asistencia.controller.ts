@@ -16,7 +16,9 @@ export class AsistenciaController {
             idProfesor: string,
             idCurso: string
         }
-    ): Promise<Alumno[]> {
+    ): Promise<
+    Alumno[]
+    > {
         try {
             const { idProfesor, idCurso } = query;
             this.logger.log(`Parámetros: idProfesor=${idProfesor}, idCurso=${idCurso}`);
@@ -38,8 +40,15 @@ export class AsistenciaController {
 
     //registrar asistencias
     @Post('registrar')
-    async registrarAsistencia(@Body() body: { profesor_id: string; curso_id: string }) {
-        const { profesor_id, curso_id } = body;
+    async registrarAsistencia(
+        @Body() body: { 
+            profesor_id: string; 
+            curso_id: string 
+        }) {
+        const { 
+            profesor_id, 
+            curso_id 
+        } = body;
 
         try {
             // Llamada al servicio para registrar la asistencia
@@ -60,8 +69,17 @@ export class AsistenciaController {
 
     // Filtrar por fecha
     @Post('por-fecha')
-    async obtenerAsistenciasPorFecha(@Body() body: { fecha?: string; profesorId: string; cursoId: string }) {
-        const { fecha, profesorId, cursoId } = body;
+    async obtenerAsistenciasPorFecha(
+        @Body() body: { 
+            fecha?: string; 
+            profesorId: string; 
+            cursoId: string 
+        }) {
+        const { 
+            fecha, 
+            profesorId, 
+            cursoId 
+        } = body;
 
         // Validar si se proporcionan profesorId y cursoId
         if (!profesorId || !cursoId) {
@@ -72,25 +90,18 @@ export class AsistenciaController {
         }
 
         try {
-            // Llama al servicio. Si la fecha no es proporcionada, el servicio utilizará la más reciente.
             const asistencias = await this.asistenciaService.asistenciasPorCurso(fecha, profesorId, cursoId);
-
-            // Verifica si se encontraron asistencias
-            if (asistencias.length === 0) {
-                throw new HttpException(
-                    'No se encontraron asistencias para la fecha proporcionada',
-                    HttpStatus.NOT_FOUND,
-                );
-            }
-
             return asistencias;
         } catch (error) {
+            const mensajeError = error.message;
+            const status = mensajeError.includes('No se encontraron') ? HttpStatus.NOT_FOUND : HttpStatus.BAD_REQUEST;
             throw new HttpException(
-                'Error al obtener asistencias: ' + error.message,
-                HttpStatus.INTERNAL_SERVER_ERROR,
+                'Error al obtener asistencias: ' + mensajeError,
+                status,
             );
         }
     }
+
 
     //actualizar asistencias
     @Patch('actualizar')
@@ -99,7 +110,10 @@ export class AsistenciaController {
             fecha: string,
             profesorId: string,
             cursoId: string,
-            cambios: { alumnoId: string, asistio: boolean }[]
+            cambios: { 
+                alumnoId: string, 
+                asistio: boolean 
+            }[]
         }
     ): Promise<Asistencia[]> {
         try {
@@ -131,8 +145,17 @@ export class AsistenciaController {
     //procentaje de faltas
     @Post('porcentaje-faltas')
     async obtenerPorcentajeFaltas(
-        @Body() data: { alumnoId: string | null; profesorId: string; cursoId: string }
-    ): Promise<{ alumno: any; porcentajeFaltas: number; faltas: number; clasesTotales: number }[]> {
+        @Body() data: { 
+            alumnoId: string | null; 
+            profesorId: string; 
+            cursoId: string 
+        }
+    ): Promise<{ 
+        alumno: any; 
+        porcentajeFaltas: number; 
+        faltas: number; 
+        clasesTotales: number 
+    }[]> {
         try {
             const { alumnoId, profesorId, cursoId } = data;
             const porcentajesFaltas = await this.asistenciaService.obtenerPorcentajeFaltas(
@@ -158,9 +181,21 @@ export class AsistenciaController {
     //faltas por fecha
     @Post('faltas-fecha')
     async obtenerFaltasPorFecha(
-        @Body() body: { profesorId: string; cursoId: string; fecha?: string }
-    ): Promise<{ fecha: string; faltas: number; asistencias: number }[]> {
-        const { profesorId, cursoId, fecha } = body;
+        @Body() body: { 
+            profesorId: string; 
+            cursoId: string; 
+            fecha?: string 
+        }
+    ): Promise<{ 
+        fecha: string; 
+        faltas: number; 
+        asistencias: number 
+    }[]> {
+        const { 
+            profesorId, 
+            cursoId, 
+            fecha 
+        } = body;
 
         try {
             const faltas = await this.asistenciaService.obtenerFaltasPorFecha(profesorId, cursoId, fecha);
@@ -176,8 +211,13 @@ export class AsistenciaController {
     //obtener fechas
     @Post('fechas')
     async obtenerFechasAsistencia(
-        @Body() body: { profesor_id: string, curso_id: string }
-    ): Promise<{ fechas: string[] }> {
+        @Body() body: { 
+            profesor_id: string, 
+            curso_id: string 
+        }
+    ): Promise<{ 
+        fechas: string[] 
+    }> {
         try {
             const { profesor_id, curso_id } = body;
 
