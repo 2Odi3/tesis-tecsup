@@ -19,7 +19,7 @@ export class AsistenciaService {
         private readonly profesorSeccionRepository: Repository<ProfesorSeccion>,
 
         private readonly recognitionService: RecognitionService,
-    ) { }
+    ) {}
 
     async obtenerAlumnosPorCursoYProfesor(
         id_profesor: string,
@@ -51,24 +51,24 @@ export class AsistenciaService {
             where: { profesor: { id_profesor: profesor_id }, curso: { id_curso: curso_id } },
             relations: ['seccion'],
         });
-    
+
         if (!profesorSeccion) {
             throw new HttpException('Profesor o curso no encontrado', HttpStatus.NOT_FOUND);
         }
-    
+
         const aulaCode = profesorSeccion.seccion.id_seccion;
         console.log(aulaCode);
-    
+
         const recognitionResult = await this.recognitionService.recognizeFaces(aulaCode);
         console.log(recognitionResult);
-    
+
         if (!recognitionResult || !recognitionResult.detected_faces) {
             throw new HttpException('Error en el reconocimiento facial', HttpStatus.BAD_REQUEST);
         }
-    
+
         const asistencias = [];
         const detectedFaces = recognitionResult.detected_faces;
-    
+
         for (const alumnoId in detectedFaces) {
             const asistencia = {
                 alumno_id: alumnoId,
@@ -76,20 +76,19 @@ export class AsistenciaService {
                 fecha: new Date(),
                 asistio: detectedFaces[alumnoId],
             };
-    
-            // Convertir la fecha a UTC-5 (Lima, Perú)
+
             const fechaUTC5 = new Date(asistencia.fecha);
-            fechaUTC5.setHours(fechaUTC5.getHours() - 5); // Restar 5 horas para UTC-5
+            fechaUTC5.setHours(fechaUTC5.getHours()); 
             asistencia.fecha = fechaUTC5;
-    
+
             asistencias.push(asistencia);
-    
+
             console.log(asistencia);
         }
-    
+
         return this.asistenciaRepository.save(asistencias);
     }
-    
+
     //asistencia por curso
     async asistenciasPorCurso(
         fecha: string,
@@ -97,7 +96,7 @@ export class AsistenciaService {
         cursoId: string
     ): Promise<Asistencia[]> {
         let fechaLocal: Date;
-    
+
         // Obtenemos la instancia de profesorSeccion independientemente de si hay fecha o no
         const profesorSeccion = await this.profesorSeccionRepository.findOne({
             where: {
@@ -105,11 +104,11 @@ export class AsistenciaService {
                 curso: { id_curso: cursoId }
             }
         });
-    
+
         if (!profesorSeccion) {
             throw new Error('No se encontró la relación profesor-curso para el profesor y curso proporcionados');
         }
-    
+
         if (fecha) {
             // Convertimos la fecha recibida de UTC-05 a UTC (sumando 5 horas)
             fechaLocal = new Date(fecha + 'T00:00:00-05:00');
@@ -124,20 +123,20 @@ export class AsistenciaService {
                 .select('MIN(asistencia.fecha)', 'minFecha')
                 .where('asistencia.profesorSeccion_id = :profesorSeccionId', { profesorSeccionId: profesorSeccion.id })
                 .getRawOne();
-    
+
             if (!ultimaFechaAsistencia || !ultimaFechaAsistencia.minFecha) {
                 throw new Error('No hay asistencias registradas para obtener la fecha más reciente');
             }
-    
+
             fechaLocal = new Date(ultimaFechaAsistencia.minFecha);
         }
-    
+
         // Convertir fechaInicio y fechaFin a UTC
         const fechaInicio = new Date(fechaLocal);
         fechaInicio.setHours(0, 0, 0, 0); // Establece el inicio del día
         const fechaFin = new Date(fechaLocal);
         fechaFin.setHours(23, 59, 59, 999); // Establece el final del día
-    
+
         // Realizamos la búsqueda de asistencias, asegurando que las fechas estén en UTC
         const asistencias = await this.asistenciaRepository.find({
             where: {
@@ -146,16 +145,16 @@ export class AsistenciaService {
             },
             relations: ['alumno_id', 'profesorSeccion_id', 'profesorSeccion_id.curso']
         });
-        
-    
+
+
         if (asistencias.length === 0) {
             throw new Error('No se encontraron asistencias para los parámetros proporcionados');
         }
-    
+
         return asistencias;
     }
-    
-    
+
+
     //actualizar la asistencia
     async actualizarAsistencia(
         updateAsistenciaDto: {
@@ -256,8 +255,8 @@ export class AsistenciaService {
         for (const alumno of alumnos) {
             const asistencias = await this.asistenciaRepository.find({
                 where: {
-                    alumno_id: { id_alumno: alumno.id_alumno }, 
-                    profesorSeccion_id: profesorSeccion 
+                    alumno_id: { id_alumno: alumno.id_alumno },
+                    profesorSeccion_id: profesorSeccion
                 }
             });
 
@@ -266,17 +265,17 @@ export class AsistenciaService {
             const porcentajeFaltas = totalAsistencias > 0 ? (faltas / totalAsistencias) * 100 : 0;
 
             resultados.push({
-                alumno, 
+                alumno,
                 porcentajeFaltas,
                 faltas,
-                clasesTotales: totalAsistencias 
+                clasesTotales: totalAsistencias
             });
         }
 
         return resultados;
     }
 
-     async obtenerFaltasPorFecha(
+    async obtenerFaltasPorFecha(
         profesorId: string,
         cursoId: string,
         fecha?: string
@@ -287,46 +286,46 @@ export class AsistenciaService {
                 curso: { id_curso: cursoId }
             }
         });
-    
+
         if (!profesorSeccion) {
             throw new NotFoundException('Profesor, curso o sección no encontrados');
         }
-    
+
         const whereConditions: any = { profesorSeccion_id: profesorSeccion };
-    
+
         if (fecha && fecha.trim() !== "") {
             const fechaInicio = new Date(`${fecha}T00:00:00`);
-            fechaInicio.setHours(fechaInicio.getHours() + 5); 
-    
+            fechaInicio.setHours(fechaInicio.getHours() + 5);
+
             const fechaFin = new Date(`${fecha}T23:59:59.999`);
-            fechaFin.setHours(fechaFin.getHours() + 5); 
-    
+            fechaFin.setHours(fechaFin.getHours() + 5);
+
             whereConditions.fecha = Between(fechaInicio, fechaFin);
         }
-    
+
         const asistencias = await this.asistenciaRepository.find({
             where: whereConditions,
             relations: ['alumno_id']
         });
-    
+
         const registroPorFecha: Record<string, { faltas: number; asistencias: number }> = {};
-    
+
         for (const asistencia of asistencias) {
             const fechaAsistencia = new Date(asistencia.fecha);
             fechaAsistencia.setHours(fechaAsistencia.getHours() - 5);
             const fechaAsistenciaStr = fechaAsistencia.toISOString().split('T')[0];
-    
+
             if (!registroPorFecha[fechaAsistenciaStr]) {
                 registroPorFecha[fechaAsistenciaStr] = { faltas: 0, asistencias: 0 };
             }
-    
+
             if (!asistencia.asistio) {
                 registroPorFecha[fechaAsistenciaStr].faltas++;
             } else {
                 registroPorFecha[fechaAsistenciaStr].asistencias++;
             }
         }
-    
+
         if (fecha && fecha.trim() !== "") {
             return registroPorFecha[fecha]
                 ? [{ fecha, ...registroPorFecha[fecha] }]
@@ -339,43 +338,39 @@ export class AsistenciaService {
             asistencias
         }));
     }
-    
-
 
     //obtener fechas
     async obtenerFechasAsistencia(profesor_id: string, curso_id: string): Promise<string[]> {
         // 1. Buscar la sección asociada al profesor y curso
         const profesorSeccion = await this.profesorSeccionRepository.findOne({
-          where: {
-            profesor: { id_profesor: profesor_id },
-            curso: { id_curso: curso_id },
-          },
-          relations: ['seccion'], // Relacionamos con la sección
+            where: {
+                profesor: { id_profesor: profesor_id },
+                curso: { id_curso: curso_id },
+            },
+            relations: ['seccion'], // Relacionamos con la sección
         });
-      
+
         if (!profesorSeccion) {
-          throw new Error('Profesor o curso no encontrado');
+            throw new Error('Profesor o curso no encontrado');
         }
-      
+
         // 2. Obtener las asistencias para esa sección de profesor
         const asistencias = await this.asistenciaRepository.find({
-          where: { profesorSeccion_id: profesorSeccion }, // Filtramos por la relación ProfesorSeccion
-          select: ['fecha'], // Solo obtenemos la fecha
+            where: { profesorSeccion_id: profesorSeccion }, // Filtramos por la relación ProfesorSeccion
+            select: ['fecha'], // Solo obtenemos la fecha
         });
-      
+
         // 3. Extraemos las fechas, las ajustamos a UTC-05 y las filtramos para eliminar duplicados
         const fechasSet = new Set(
-          asistencias.map((asistencia) => {
-            // Convertir la fecha a UTC-05
-            const fechaUtc = new Date(asistencia.fecha); // Obtener la fecha en UTC
-            fechaUtc.setHours(fechaUtc.getHours() - 5); // Restar 5 horas para ajustar a UTC-05
-            return fechaUtc.toISOString().split('T')[0]; // Obtener solo la parte de la fecha (YYYY-MM-DD)
-          })
+            asistencias.map((asistencia) => {
+                // Convertir la fecha a UTC-05
+                const fechaUtc = new Date(asistencia.fecha); // Obtener la fecha en UTC
+                fechaUtc.setHours(fechaUtc.getHours() - 5); // Restar 5 horas para ajustar a UTC-05
+                return fechaUtc.toISOString().split('T')[0]; // Obtener solo la parte de la fecha (YYYY-MM-DD)
+            })
         );
-      
+
         // Convertimos el Set de fechas a un array y lo devolvemos
         return Array.from(fechasSet);
-      }
-      
-      
+    }
 }

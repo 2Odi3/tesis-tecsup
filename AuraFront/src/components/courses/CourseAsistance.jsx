@@ -1,13 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import NavbarHeader from '../NavbarHeader';
 import { Link, useParams } from 'react-router-dom';
-import { getAsistencias, updateAsistencias, getCursoById, getFechasAsistencia, obtenerFaltasPorFecha } from '../../services/apiService';
+import { getAsistencias, updateAsistencias, getCursoById, getFechasAsistencia, obtenerFaltasPorFecha, registrarAsistencia } from '../../services/apiService';
 import { decryptId } from '../../utils/cryptoUtils';
 import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
 
 const CourseAsistance = () => {
+  // Importación de parámetros de la URL
   const { idCurso, idProfesor } = useParams();
+
+  // Definición de estados
   const [asistencias, setAsistencias] = useState([]);
   const [isEditing, setIsEditing] = useState(false);
   const [curso, setCurso] = useState(null);
@@ -18,12 +21,30 @@ const CourseAsistance = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filter, setFilter] = useState('');
   const [falta, setFalta] = useState('');
+  const [fechaHoy, setFechaHoy] = useState('');
+  const [showAsistanceModal, setShowAsistanceModal] = useState(false);
 
+  // Desencriptación de IDs de curso y profesor
   const idCur = decryptId(idCurso);
   const idProf = decryptId(idProfesor);
 
+  // Definición de efectos
+
+  useEffect(() => {
+    // Obtener la fecha de hoy en formato 'YYYY-MM-DD'
+    const fecha = new Date();
+    const fechaUTCMinus5 = new Date(fecha.toLocaleString("en-US", { timeZone: "America/Lima" }));
+    const año = fechaUTCMinus5.getFullYear();
+    const mes = (fechaUTCMinus5.getMonth() + 1).toString().padStart(2, '0');
+    const dia = fechaUTCMinus5.getDate().toString().padStart(2, '0');
+    const fechaFormateada = `${año}-${mes}-${dia}`;
+    setFechaHoy(fechaFormateada);
+  }, []);
+
   useEffect(() => {
     if (!selectedFecha) return;
+
+    // Obtención de faltas para la fecha seleccionada
     const fetchFaltasFecha = async () => {
       try {
         const faltasFecha = await obtenerFaltasPorFecha(idProf, idCur, selectedFecha);
@@ -32,10 +53,12 @@ const CourseAsistance = () => {
         console.error('Error al obtener las faltas:', error);
       }
     };
+
     fetchFaltasFecha();
   }, [selectedFecha, idProf, idCur]);
 
   useEffect(() => {
+    // Obtención de datos del curso por ID
     const fetchCurso = async () => {
       try {
         const cursoData = await getCursoById(idCur);
@@ -49,6 +72,7 @@ const CourseAsistance = () => {
   }, [idCur]);
 
   useEffect(() => {
+    // Obtención de asistencias iniciales
     const fetchInitialAsistencias = async () => {
       try {
         const json = {
@@ -84,6 +108,7 @@ const CourseAsistance = () => {
   useEffect(() => {
     if (!idProf || !idCur) return;
 
+    // Obtención de asistencias para la fecha seleccionada
     const fetchAsistencias = async () => {
       try {
         const response = await getAsistencias({
@@ -103,7 +128,28 @@ const CourseAsistance = () => {
     fetchAsistencias();
   }, [selectedFecha, idCur, idProf]);
 
+  useEffect(() => {
+    // Inicialización de tooltips de Bootstrap
+    const tooltipTriggerList = Array.from(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.forEach(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
 
+    return () => {
+      tooltipTriggerList.forEach(tooltipTriggerEl => {
+        const tooltip = bootstrap.Tooltip.getInstance(tooltipTriggerEl);
+        if (tooltip) {
+          tooltip.dispose();
+        }
+      });
+    };
+  }, [falta]);
+
+  useEffect(() => {
+    // Deshabilitación del botón "Agregar" si la fecha de hoy está en el conjunto de fechas
+    const botonDeshabilitado = fechas.includes(fechaHoy);
+    document.getElementById('botonAgregar').disabled = botonDeshabilitado;
+  }, [fechas, fechaHoy]);
+
+  // Manejo de cambios en el radio button
   const handleRadioChange = (id, asistio) => {
     setAsistencias(prev =>
       prev.map(asistencia =>
@@ -112,6 +158,7 @@ const CourseAsistance = () => {
     );
   };
 
+  // Envío de asistencias actualizadas
   const handleSubmit = async () => {
     const cambios = asistencias.map(({ alumno_id, asistio }) => ({
       alumnoId: alumno_id.id_alumno,
@@ -134,35 +181,56 @@ const CourseAsistance = () => {
     }
   };
 
+  // Nueva asistencia con IA (Reconocimiento Facial)
+  const handleAsistanceRegister = async () => {
+    const data = {
+      profesor_id: idProf,
+      curso_id: idCur
+    }
+    try {
+      const response = await registrarAsistencia(data);
+      console.log('Asistencia registrada:', response);
+    } catch (error) {
+      console.error('Error al registrar asistencia:', error);
+    }
+  };
+
+  // Activar el modal
+  const handleAsistanceClick = () => {
+    setShowAsistanceModal(true); // Mostrar el modal
+  };
+
+  // Desactivar el modal
+  const handleCloseModal = () => {
+    setShowAsistanceModal(false); // Cerrar el modal
+  };
+
+  // Cálculo de la semana seleccionada
   const selectedSemanaCalculated = fechas.indexOf(selectedFecha) + 1;
 
+  // Filtrado de asistencias
   const filteredAsistencias = asistencias.filter(asistencia => {
     const matchesSearchTerm = asistencia.alumno_id.nombre.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesFilter = filter === '' || (filter === 'asistentes' && asistencia.asistio) || (filter === 'faltantes' && !asistencia.asistio);
     return matchesSearchTerm && matchesFilter;
   });
 
-  useEffect(() => {
-    const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
-    tooltipTriggerList.forEach((tooltipTriggerEl) => {
-      new window.bootstrap.Tooltip(tooltipTriggerEl);
-    });
-  }, []);
+  // Ordenamiento de asistencias filtradas
+  const filteredAndSortedAsistencias = filteredAsistencias.sort((a, b) => {
+    return a.alumno_id.nombre.localeCompare(b.alumno_id.nombre);
+  });
 
-  //exportar a excel
+  // Exportación a Excel
   function exportToExcel(data, fileName = 'datos.xlsx') {
-    // Crear un nuevo libro
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet('Asistencias');
 
-    // Establecer estilos para el encabezado
     worksheet.columns = [
       { header: 'Nombre', key: 'Nombre', width: 30 },
       { header: 'Asistencia', key: 'Asistencia', width: 15 },
       { header: 'Falta', key: 'Falta', width: 15 },
     ];
 
-    // Establecer estilo para el encabezado
     worksheet.getRow(1).font = { bold: true, color: { argb: 'FFFFFF' } };
     worksheet.getRow(1).fill = {
       type: 'pattern',
@@ -171,7 +239,6 @@ const CourseAsistance = () => {
     };
     worksheet.getRow(1).alignment = { horizontal: 'center' };
 
-    // Mapear los datos a la hoja de cálculo
     const mappedAsistencias = data.map((asistencia) => ({
       Nombre: asistencia.alumno_id.nombre,
       Asistencia: asistencia.asistio === true ? '✓' : '',
@@ -191,25 +258,6 @@ const CourseAsistance = () => {
     });
   }
 
-  useEffect(() => {
-    const tooltipTriggerList = Array.from(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-
-    tooltipTriggerList.forEach(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
-
-    return () => {
-      tooltipTriggerList.forEach(tooltipTriggerEl => {
-        const tooltip = bootstrap.Tooltip.getInstance(tooltipTriggerEl);
-        if (tooltip) {
-          tooltip.dispose();
-        }
-      });
-    };
-  }, [falta]);
-
-  const filteredAndSortedAsistencias = filteredAsistencias.sort((a, b) => {
-    return a.alumno_id.nombre.localeCompare(b.alumno_id.nombre);
-  });
-  
   return (
     <div className="wrapper">
       <NavbarHeader />
@@ -239,9 +287,15 @@ const CourseAsistance = () => {
               </nav>
             </div>
 
-            <div className="ms-auto">
+            <div className="ms-auto d-flex align-items-center">
+              <a onClick={handleAsistanceClick}>
+                <div className="plus btn-register" id='botonAgregar'>
+                  <input type="radio" className="btn-check" />
+                  <label className="">+</label>
+                </div>
+              </a>
               {asistencias.length > 0 ? (
-                <div className="d-flex">
+                <div className="d-flex align-items-center">
                   <select
                     id="fechaSelect"
                     className="form-select border-0"
@@ -259,11 +313,36 @@ const CourseAsistance = () => {
                   </select>
                 </div>
               ) : (
-                <div className="d-flex">
+                <div className="d-flex align-items-center">
                   <h6>Sin Registros</h6>
                 </div>
               )}
+
+              {/* Modal */}
+              {showAsistanceModal && (
+                <>
+                  <div className="modal-backdrop fade show"></div>
+                  <div className="modal show fade" tabIndex="-1" aria-hidden="true" style={{ display: 'block' }}>
+                    <div className="modal-dialog modal-dialog-centered">
+                      <div className="modal-content">
+                        <div className="modal-header">
+                          <h5 className="modal-title">Registrar Asistencia</h5>
+                          <button type="button" className="btn-close" onClick={handleCloseModal} aria-label="Close"></button>
+                        </div>
+                        <div className="modal-body">
+                          ¿Quieres tomar la asistencia de hoy?
+                        </div>
+                        <div className="modal-footer">
+                          <button type="button" className="btn btn-secondary" onClick={handleCloseModal}>Cancelar</button>
+                          <button type="button" className="btn btn-primary" onClick={handleAsistanceRegister}>Registrar</button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
+
           </div>
 
           <hr className="my-2" />

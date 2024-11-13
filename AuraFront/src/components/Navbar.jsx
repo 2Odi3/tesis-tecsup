@@ -9,6 +9,7 @@ const Navbar = ({ setIsAuthenticated }) => {
   const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const [menuVisible, setMenuVisible] = useState(false);
+  const [showLogoutModal, setShowLogoutModal] = useState(false); // Estado para mostrar/ocultar el modal
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -39,6 +40,15 @@ const Navbar = ({ setIsAuthenticated }) => {
   const handleLogout = () => {
     logout(setIsAuthenticated);
     navigate('/');
+    setShowLogoutModal(false); // Cerrar el modal después de cerrar sesión
+  };
+
+  const handleLogoutClick = () => {
+    setShowLogoutModal(true); // Mostrar el modal
+  };
+
+  const handleCloseModal = () => {
+    setShowLogoutModal(false); // Cerrar el modal
   };
 
   const abbreviateCourseName = (name) => {
@@ -137,7 +147,7 @@ const Navbar = ({ setIsAuthenticated }) => {
         </li>
 
         <li className="logout-item" style={{ cursor: 'pointer' }}>
-          <a onClick={handleLogout}>
+          <a onClick={handleLogoutClick}>
             <div className="parent-icon">
               <div className="font-22">
                 <ion-icon name="log-out-outline"></ion-icon>
@@ -147,6 +157,31 @@ const Navbar = ({ setIsAuthenticated }) => {
           </a>
         </li>
       </ul>
+
+      {/* Modal */}
+      {showLogoutModal && (
+        <>
+          <div className="modal-backdrop fade show"></div>
+
+          <div className="modal show fade" tabIndex="-1" aria-hidden="true" style={{ display: 'block' }}>
+            <div className="modal-dialog modal-dialog-centered">
+              <div className="modal-content">
+                <div className="modal-header">
+                  <h5 className="modal-title">Cerrar sesión</h5>
+                  <button type="button" className="btn-close" onClick={handleCloseModal} aria-label="Close"></button>
+                </div>
+                <div className="modal-body">
+                  ¿Estás seguro de que deseas cerrar sesión?
+                </div>
+                <div className="modal-footer">
+                  <button type="button" className="btn btn-secondary" onClick={handleCloseModal}>Cancelar</button>
+                  <button type="button" className="btn btn-primary" onClick={handleLogout}>Cerrar sesión</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
     </aside>
   );
 };

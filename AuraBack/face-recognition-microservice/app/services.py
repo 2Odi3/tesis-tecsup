@@ -10,71 +10,80 @@ def recognize_faces(aula_code):
     if not os.path.exists(selected_folder):
         return {"error": "La carpeta del aula no existe."}, 400
 
-    facesEncodings = []  # Corregir el nombre de la variable
-    facesNames = []
+    facesEncodings = [] 
+    facesNames = []    
 
-    # Cargar las imágenes y sus codificaciones faciales
     for file_name in os.listdir(selected_folder):
         image = cv2.imread(os.path.join(selected_folder, file_name))
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-        
-        # Obtener las codificaciones faciales
+
         face_encodings = face_recognition.face_encodings(image)
         
-        if face_encodings:  # Verificar que se hayan detectado caras
+        if face_encodings: 
             f_coding = face_encodings[0]
             facesEncodings.append(f_coding)
-            facesNames.append(file_name.split(".")[0])  # Eliminar extensión del nombre del archivo
+            facesNames.append(file_name.split(".")[0])  
         else:
             print(f"No se detectaron caras en la imagen {file_name}")
 
-    cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
+    cap = cv2.VideoCapture("rtsp://admin:Hik12345@192.168.1.7:554/Streaming/Channels/101/")  
+
     if not cap.isOpened():
-        return {"error": "No se pudo acceder a la cámara."}, 500
+        return {"error": "No se pudo acceder a la cámara RTSP."}, 500
     
     faceClassif = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_frontalface_default.xml")
 
     start_time = time.time()
-    end_time = start_time + 60  # Un minuto
-    detected_faces = {name: False for name in facesNames}  # Inicializar todos los nombres como no reconocidos
+    detected_faces = {name: False for name in facesNames}
 
-    while True:
-        ret, frame = cap.read()
-        if not ret:
-            break
+    try:
+        while True:
+            ret, frame = cap.read()
 
-        frame = cv2.flip(frame, 1)
-        orig = frame.copy()
+            attempts = 0
+            while not ret and attempts < 3:
+                print("Error al recibir el fotograma de la cámara RTSP. Reintentando...")
+                ret, frame = cap.read()
+                attempts += 1
+                time.sleep(1) 
 
-        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-        faces = faceClassif.detectMultiScale(gray, 1.1, 5)
+            if not ret:
+                print("No se pudo obtener un frame después de varios intentos. Saliendo...")
+                break  
 
-        for (x, y, w, h) in faces:
-            face = orig[y:y + h, x:x + w]
-            face = cv2.cvtColor(face, cv2.COLOR_BGR2RGB)
-            actual_face_encoding = face_recognition.face_encodings(face)
+            frame = cv2.flip(frame, 1)
+            orig = frame.copy()
 
-            if actual_face_encoding:
-                result = face_recognition.compare_faces(facesEncodings, actual_face_encoding[0])
+            gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+            faces = faceClassif.detectMultiScale(gray, 1.1, 5)
 
-                if True in result:
-                    index = result.index(True)
-                    name = facesNames[index]
-                    detected_faces[name] = True  # Marcar como reconocido
-                else:
-                    name = "Unknown"
+            for (x, y, w, h) in faces:
+                face = orig[y:y + h, x:x + w]
+                face = cv2.cvtColor(face, cv2.COLOR_BGR2RGB)
+                actual_face_encoding = face_recognition.face_encodings(face)
 
-        time_left = int(end_time - time.time())
-        print(f"Tiempo restante: {time_left} segundos", end='\r')
+                if actual_face_encoding:
+                    result = face_recognition.compare_faces(facesEncodings, actual_face_encoding[0])
 
-        if time_left <= 0:
-            break
+                    if True in result:
+                        index = result.index(True)
+                        name = facesNames[index]
+                        detected_faces[name] = True  
+                    else:
+                        name = "Unknown"
 
-        k = cv2.waitKey(1) & 0xFF
-        if k == 27:  # Salir si se presiona 'Esc'
-            break
+            if cv2.waitKey(1) & 0xFF == 27:  
+                print("Cerrando el ciclo...")
+                break
 
-    cap.release()
-    cv2.destroyAllWindows()
+    except Exception as e:
+        print(f"Error inesperado: {e}")
+    
+    finally:
+        cap.release()
+        cv2.destroyAllWindows()
 
-    return detected_faces  # Devolver el diccionario de reconocimiento
+        total_time = time.time() - start_time
+        print(f"\nTiempo total de reconocimiento: {total_time:.2f} segundos")
+
+    return detected_faces
