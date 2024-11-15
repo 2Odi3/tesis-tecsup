@@ -167,15 +167,14 @@ const Navbar = ({ setIsAuthenticated }) => {
             <div className="modal-dialog modal-dialog-centered">
               <div className="modal-content">
                 <div className="modal-header">
-                  <h5 className="modal-title">Cerrar sesión</h5>
-                  <button type="button" className="btn-close" onClick={handleCloseModal} aria-label="Close"></button>
+                  <h5 className="modal-title" style={{ fontSize: '1.2rem' }}>Cerrar sesión</h5>
                 </div>
                 <div className="modal-body">
                   ¿Estás seguro de que deseas cerrar sesión?
                 </div>
                 <div className="modal-footer">
-                  <button type="button" className="btn btn-secondary" onClick={handleCloseModal}>Cancelar</button>
-                  <button type="button" className="btn btn-primary" onClick={handleLogout}>Cerrar sesión</button>
+                  <button type="button" className="btn btn-cancel" onClick={handleCloseModal}>Cancelar</button>
+                  <button type="button" className="btn btn-accept" onClick={handleLogout}>Aceptar</button>
                 </div>
               </div>
             </div>

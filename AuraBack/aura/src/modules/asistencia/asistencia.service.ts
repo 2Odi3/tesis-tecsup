@@ -45,7 +45,8 @@ export class AsistenciaService {
     //registrar asistencia
     async registrarAsistencia(
         profesor_id: string,
-        curso_id: string
+        curso_id: string,
+        time: number,
     ): Promise<any> {
         const profesorSeccion = await this.profesorSeccionRepository.findOne({
             where: { profesor: { id_profesor: profesor_id }, curso: { id_curso: curso_id } },
@@ -59,7 +60,7 @@ export class AsistenciaService {
         const aulaCode = profesorSeccion.seccion.id_seccion;
         console.log(aulaCode);
 
-        const recognitionResult = await this.recognitionService.recognizeFaces(aulaCode);
+        const recognitionResult = await this.recognitionService.recognizeFaces(aulaCode, time);
         console.log(recognitionResult);
 
         if (!recognitionResult || !recognitionResult.detected_faces) {
@@ -224,57 +225,59 @@ export class AsistenciaService {
     }
 
     //porcentaje de faltas
-    async obtenerPorcentajeFaltas(
-        alumnoId: string | null,
-        profesorId: string,
-        cursoId: string
-    ): Promise<{ alumno: any; porcentajeFaltas: number; faltas: number; clasesTotales: number }[]> {
-        const profesorSeccion = await this.profesorSeccionRepository.findOne({
-            where: {
-                profesor: { id_profesor: profesorId },
-                curso: { id_curso: cursoId }
-            },
-            relations: ['seccion'],
-        });
+async obtenerPorcentajeFaltas(
+    alumnoId: string | null,
+    profesorId: string,
+    cursoId: string
+): Promise<{ alumno: any; porcentajeFaltas: number; faltas: number; clasesTotales: number }[]> {
+    const profesorSeccion = await this.profesorSeccionRepository.findOne({
+        where: {
+            profesor: { id_profesor: profesorId },
+            curso: { id_curso: cursoId }
+        },
+        relations: ['seccion'],
+    });
 
-        if (!profesorSeccion) {
-            throw new NotFoundException('Profesor, curso o sección no encontrados');
-        }
-
-        // Si no se proporciona un alumnoId, obtener todos los alumnos de la sección
-        const alumnos = alumnoId
-            ? [await this.alumnoRepository.findOneBy({ id_alumno: alumnoId })]
-            : await this.alumnoRepository.find({ where: { seccion: profesorSeccion.seccion } });
-
-        if (!alumnos || alumnos.length === 0) {
-            throw new NotFoundException('No se encontraron alumnos para este curso y profesor');
-        }
-
-        const resultados: { alumno: any; porcentajeFaltas: number; faltas: number; clasesTotales: number }[] = [];
-
-        for (const alumno of alumnos) {
-            const asistencias = await this.asistenciaRepository.find({
-                where: {
-                    alumno_id: { id_alumno: alumno.id_alumno },
-                    profesorSeccion_id: profesorSeccion
-                }
-            });
-
-            const totalAsistencias = asistencias.length;
-            const faltas = asistencias.filter(asistencia => !asistencia.asistio).length;
-            const porcentajeFaltas = totalAsistencias > 0 ? (faltas / totalAsistencias) * 100 : 0;
-
-            resultados.push({
-                alumno,
-                porcentajeFaltas,
-                faltas,
-                clasesTotales: totalAsistencias
-            });
-        }
-
-        return resultados;
+    if (!profesorSeccion) {
+        throw new NotFoundException('Profesor, curso o sección no encontrados');
     }
 
+    // Si no se proporciona un alumnoId, obtener todos los alumnos de la sección
+    const alumnos = alumnoId
+        ? [await this.alumnoRepository.findOneBy({ id_alumno: alumnoId })]
+        : await this.alumnoRepository.find({ where: { seccion: profesorSeccion.seccion } });
+
+    if (!alumnos || alumnos.length === 0) {
+        throw new NotFoundException('No se encontraron alumnos para este curso y profesor');
+    }
+
+    const resultados: { alumno: any; porcentajeFaltas: number; faltas: number; clasesTotales: number }[] = [];
+
+    for (const alumno of alumnos) {
+        const asistencias = await this.asistenciaRepository.find({
+            where: {
+                alumno_id: { id_alumno: alumno.id_alumno },
+                profesorSeccion_id: profesorSeccion
+            }
+        });
+
+        const totalAsistencias = asistencias.length;
+        const faltas = asistencias.filter(asistencia => !asistencia.asistio).length;
+        const porcentajeFaltas = totalAsistencias > 0 ? Math.round((faltas / totalAsistencias) * 100) : 0;
+
+        resultados.push({
+            alumno,
+            porcentajeFaltas,
+            faltas,
+            clasesTotales: totalAsistencias
+        });
+    }
+
+    return resultados;
+}
+
+
+    // faltas por fecha
     async obtenerFaltasPorFecha(
         profesorId: string,
         cursoId: string,

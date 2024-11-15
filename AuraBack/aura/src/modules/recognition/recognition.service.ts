@@ -5,12 +5,12 @@ import { AxiosError } from 'axios';
 @Injectable()
 export class RecognitionService {
 
-    constructor(private readonly httpService: HttpService) {}
+    constructor(private readonly httpService: HttpService) { }
 
-    async recognizeFaces(aulaCode: string): Promise<any> {
+    async recognizeFaces(aulaCode: string, time: number): Promise<any> {
         try {
             const response = await this.httpService
-                .post('http://127.0.0.1:5000/api/recognize_faces', { aula: aulaCode })
+                .post('http://127.0.0.1:5000/api/recognize_faces', { aula: aulaCode,  recognition_duration: time})
                 .toPromise();
 
             return response.data;
@@ -21,7 +21,7 @@ export class RecognitionService {
                     // Errores del lado del cliente/servidor (código de estado 4xx o 5xx)
                     const statusCode = error.response.status;
                     const errorMessage = error.response.data?.message || 'Error en el servicio de reconocimiento facial';
-                    
+
                     throw new HttpException(errorMessage, statusCode);
                 } else if (error.request) {
                     // No se recibió respuesta (problema de red o de conexión)
@@ -33,6 +33,29 @@ export class RecognitionService {
             }
             // Otro tipo de errores no específicos de Axios
             throw new HttpException('Error inesperado en el reconocimiento facial', HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    async stopRecognition(): Promise<any> {
+        try {
+            const response = await this.httpService
+                .post('http://127.0.0.1:5000/api/stop_recognition', {})
+                .toPromise();
+            return response.data;
+        } catch (error) {
+            if (error instanceof AxiosError) {
+                if (error.response) {
+                    const statusCode = error.response.status;
+                    const errorMessage = error.response.data?.message || 'Error al detener el reconocimiento facial';
+                    throw new HttpException(errorMessage, statusCode);
+                } else if (error.request) {
+                    throw new HttpException(
+                        'Error de conexión con el microservicio de reconocimiento facial',
+                        HttpStatus.SERVICE_UNAVAILABLE,
+                    );
+                }
+            }
+            throw new HttpException('Error inesperado al detener el reconocimiento facial', HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 }

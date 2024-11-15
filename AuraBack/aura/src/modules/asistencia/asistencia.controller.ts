@@ -43,16 +43,18 @@ export class AsistenciaController {
     async registrarAsistencia(
         @Body() body: { 
             profesor_id: string; 
-            curso_id: string 
+            curso_id: string;
+            tiempo: number;
         }) {
         const { 
             profesor_id, 
-            curso_id 
+            curso_id,
+            tiempo 
         } = body;
 
         try {
             // Llamada al servicio para registrar la asistencia
-            const asistencias = await this.asistenciaService.registrarAsistencia(profesor_id, curso_id);
+            const asistencias = await this.asistenciaService.registrarAsistencia(profesor_id, curso_id, tiempo);
             return { message: 'Asistencia registrada correctamente', asistencias };
         } catch (error) {
             // Manejo de excepciones y reenvío con código y mensaje apropiado

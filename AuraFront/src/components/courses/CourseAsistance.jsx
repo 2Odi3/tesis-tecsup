@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import NavbarHeader from '../NavbarHeader';
-import { Link, useParams } from 'react-router-dom';
-import { getAsistencias, updateAsistencias, getCursoById, getFechasAsistencia, obtenerFaltasPorFecha, registrarAsistencia } from '../../services/apiService';
+import { Link, useParams, useNavigate } from 'react-router-dom';
+import { getAsistencias, updateAsistencias, getCursoById, getFechasAsistencia, obtenerFaltasPorFecha, registrarAsistencia, DetenerRegistroAsistencia } from '../../services/apiService';
 import { decryptId } from '../../utils/cryptoUtils';
 import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
@@ -23,13 +23,36 @@ const CourseAsistance = () => {
   const [falta, setFalta] = useState('');
   const [fechaHoy, setFechaHoy] = useState('');
   const [showAsistanceModal, setShowAsistanceModal] = useState(false);
+  const [takeAsistanceModal, setTakeAsistanceModal] = useState(false);
+  const [time, setTime] = useState();
+  const [isTakingAsistance, setIsTakingAsistance] = useState(false);
+  const [showModalStop, setShowModalStop] = useState(false);
+  const [disabledButtonAdd, setDisabledButtonAdd] = useState(false);
 
   // Desencriptación de IDs de curso y profesor
   const idCur = decryptId(idCurso);
   const idProf = decryptId(idProfesor);
 
-  // Definición de efectos
+  // Datos
+  const datosCurso = {
+    cursoId: idCur,
+    cursoNom: curso?.nombre || '',
+    isTakingAsistance: true
+  }
 
+  // Definición de useEFfect
+  useEffect(() => {
+    const storedIsTakingAsistance = JSON.parse(localStorage.getItem('isTakingAsistance'));
+    
+    if (storedIsTakingAsistance && storedIsTakingAsistance.isTakingAsistance) {
+      if (storedIsTakingAsistance.cursoId === idCur) {
+        setIsTakingAsistance(true);
+      } else {
+        setDisabledButtonAdd(true)
+      }
+    }
+  }, [idCur]); 
+  
   useEffect(() => {
     // Obtener la fecha de hoy en formato 'YYYY-MM-DD'
     const fecha = new Date();
@@ -72,7 +95,7 @@ const CourseAsistance = () => {
   }, [idCur]);
 
   useEffect(() => {
-    // Obtención de asistencias iniciales
+    // Obtención de fechas iniciales
     const fetchInitialAsistencias = async () => {
       try {
         const json = {
@@ -103,7 +126,7 @@ const CourseAsistance = () => {
     };
 
     fetchInitialAsistencias();
-  }, [idCur, idProf]);
+  }, [idCur, idProf, isTakingAsistance]);
 
   useEffect(() => {
     if (!idProf || !idCur) return;
@@ -144,12 +167,10 @@ const CourseAsistance = () => {
   }, [falta]);
 
   useEffect(() => {
-    // Deshabilitación del botón "Agregar" si la fecha de hoy está en el conjunto de fechas
     const botonDeshabilitado = fechas.includes(fechaHoy);
     document.getElementById('botonAgregar').disabled = botonDeshabilitado;
   }, [fechas, fechaHoy]);
 
-  // Manejo de cambios en el radio button
   const handleRadioChange = (id, asistio) => {
     setAsistencias(prev =>
       prev.map(asistencia =>
@@ -182,27 +203,59 @@ const CourseAsistance = () => {
   };
 
   // Nueva asistencia con IA (Reconocimiento Facial)
-  const handleAsistanceRegister = async () => {
+  const handleAsistanceRegister = async (tiempo) => {
+    const timeSegs = tiempo * 60;
     const data = {
       profesor_id: idProf,
-      curso_id: idCur
-    }
+      curso_id: idCur,
+      tiempo: timeSegs === 0 ? 900 : timeSegs,
+    };
+    
     try {
       const response = await registrarAsistencia(data);
-      console.log('Asistencia registrada:', response);
+      setIsTakingAsistance(false);
+      localStorage.removeItem('isTakingAsistance');
+    } catch (error) {
+      console.error('Error al registrar asistencia:', error);
+    }
+  };
+  
+  const handleInputChange = (e) => {
+    // Obtenemos el valor del input, limitándolo entre 1 y 15
+    const value = Math.max(1, Math.min(15, e.target.value));
+    setTime(value);  // Actualizamos el estado con el nuevo valor
+  };
+
+  // Activar el modal
+  const handleAsistanceClick = () => {
+    if (!showAsistanceModal) {
+      setShowAsistanceModal(true);
+    } else {
+      setShowAsistanceModal(false);
+      setTakeAsistanceModal(true);
+    }
+  };
+
+  // Desactivar el modal
+  const handleCloseModal = () => {
+    setTakeAsistanceModal(false);
+    setShowAsistanceModal(false);
+    setShowModalStop(false);
+  };
+
+  // Detener el registro
+  const handleStop = async () => {
+    try {
+      const response = DetenerRegistroAsistencia();
+      setIsTakingAsistance(false);
+      localStorage.removeItem('isTakingAsistance');
     } catch (error) {
       console.error('Error al registrar asistencia:', error);
     }
   };
 
-  // Activar el modal
-  const handleAsistanceClick = () => {
-    setShowAsistanceModal(true); // Mostrar el modal
-  };
-
-  // Desactivar el modal
-  const handleCloseModal = () => {
-    setShowAsistanceModal(false); // Cerrar el modal
+  const handleStopAsistance = () => {
+    setShowModalStop(true);
   };
 
   // Cálculo de la semana seleccionada
@@ -260,7 +313,7 @@ const CourseAsistance = () => {
 
   return (
     <div className="wrapper">
-      <NavbarHeader />
+      <NavbarHeader/>
 
       <div className="page-content-wrapper">
         <div className="page-content">
@@ -288,12 +341,56 @@ const CourseAsistance = () => {
             </div>
 
             <div className="ms-auto d-flex align-items-center">
-              <a onClick={handleAsistanceClick}>
-                <div className="plus btn-register" id='botonAgregar'>
-                  <input type="radio" className="btn-check" />
-                  <label className="">+</label>
-                </div>
-              </a>
+              {isTakingAsistance && (
+                <button
+                  onClick={handleStopAsistance}
+                  className="plus btn-register mr-4"
+                  id="botonDetener"
+                  data-bs-toggle="tooltip"
+                  data-bs-placement="bottom"
+                  data-bs-original-title='Detener'
+                >
+                  <i className='lni lni-hand' style={{ fontSize: '0.9rem' }}></i>
+                </button>
+              )}
+
+              {/* 1er Modal */}
+              {showModalStop && (
+                <>
+                  <div className="modal-backdrop fade show"></div>
+                  <div className="modal show fade" tabIndex="-1" aria-hidden="true" style={{ display: 'block' }}>
+                    <div className="modal-dialog modal-dialog-centered">
+                      <div className="modal-content">
+                        <div className="modal-header">
+                          <h5 className="modal-title" style={{ fontSize: '1.2rem' }}>Interrumpir registro</h5>
+                        </div>
+                        <div className="modal-body">
+                          ¿Esta seguro de interrumpir el proceso? No podrá volver a registrar.
+                        </div>
+                        <div className="modal-footer">
+                          <button type="button" className="btn btn-cancel" onClick={handleCloseModal}>Cancelar</button>
+                          <button type="button" className="btn btn-accept" onClick={() => {
+                            handleStop();
+                            handleCloseModal();
+                          }}>Detener</button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </>
+              )}
+
+              <button
+                onClick={handleAsistanceClick}
+                className="plus btn-register mr-4"
+                id="botonAgregar"
+                disabled={fechas.includes(fechaHoy) || disabledButtonAdd}
+                data-bs-toggle="tooltip"
+                data-bs-placement="top"
+                data-bs-original-title={fechas.includes(fechaHoy) ? 'Ya hay una asistencia registrada' : 'Registrar'}
+              >
+                <i className='lni lni-plus' style={{ fontSize: '0.9rem' }}></i>
+              </button>
               {asistencias.length > 0 ? (
                 <div className="d-flex align-items-center">
                   <select
@@ -318,7 +415,7 @@ const CourseAsistance = () => {
                 </div>
               )}
 
-              {/* Modal */}
+              {/* 2do Modal */}
               {showAsistanceModal && (
                 <>
                   <div className="modal-backdrop fade show"></div>
@@ -326,20 +423,62 @@ const CourseAsistance = () => {
                     <div className="modal-dialog modal-dialog-centered">
                       <div className="modal-content">
                         <div className="modal-header">
-                          <h5 className="modal-title">Registrar Asistencia</h5>
-                          <button type="button" className="btn-close" onClick={handleCloseModal} aria-label="Close"></button>
+                          <h5 className="modal-title" style={{ fontSize: '1.2rem' }}>Registrar Asistencia</h5>
                         </div>
                         <div className="modal-body">
                           ¿Quieres tomar la asistencia de hoy?
                         </div>
                         <div className="modal-footer">
-                          <button type="button" className="btn btn-secondary" onClick={handleCloseModal}>Cancelar</button>
-                          <button type="button" className="btn btn-primary" onClick={handleAsistanceRegister}>Registrar</button>
+                          <button type="button" className="btn btn-cancel" onClick={handleCloseModal}>Cancelar</button>
+                          <button type="button" className="btn btn-accept" onClick={handleAsistanceClick}>Aceptar</button>
                         </div>
                       </div>
                     </div>
                   </div>
                 </>
+              )}
+              {/* 3er Modal */}
+              {takeAsistanceModal && (
+                <>
+                  <div className="modal-backdrop fade show"></div>
+                  <div className="modal show fade" tabIndex="-1" aria-hidden="true" style={{ display: 'block' }}>
+                    <div className="modal-dialog modal-dialog-centered custom-modal-size">
+                      <div className="modal-content custom-modal-height">
+                        <div className="modal-header">
+                          <h5 className="modal-title" style={{ fontSize: '1.2rem' }}>Asistencia</h5>
+                        </div>
+                        <div className="modal-body text-center d-flex flex-column align-items-center">
+                          <h5>¿Por cuánto tiempo deseas que se tome la asistencia?</h5>
+                          <input
+                            type="number"
+                            className="form-control mt-4 custom-input my-5"
+                            placeholder="Tiempo"
+                            style={{ width: '130px' }}
+                            min="0"
+                            max="15"
+                            value={time}
+                            onChange={handleInputChange}
+                          />
+                          <p className="text-start mt-5">Nota: Si no coloca ningún número, se asumirán 15 minutos.</p>
+                        </div>
+                        <div className="modal-footer">
+                          <button type="button" className="btn btn-cancel" onClick={handleCloseModal}>Cancelar</button>
+                          <button
+                            type="button"
+                            className="btn btn-accept"
+                            onClick={() => {
+                              handleAsistanceRegister(time);
+                              localStorage.setItem('isTakingAsistance', JSON.stringify(datosCurso));
+                              setIsTakingAsistance(true);
+                              handleCloseModal();
+                            }}
+                            >Registrar</button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </>
+
               )}
             </div>
 

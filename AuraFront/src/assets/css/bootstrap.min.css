@@ -193,7 +193,6 @@ body {
 	color: var(--bs-body-color);
 	text-align: var(--bs-body-text-align);
 	background-color: var(--bs-body-bg);
-	-webkit-text-size-adjust: 100%;
 	-webkit-tap-highlight-color: transparent
 }
 hr {
@@ -368,10 +367,7 @@ caption {
 	color: var(--bs-secondary-color);
 	text-align: left
 }
-th {
-	text-align: inherit;
-	text-align: -webkit-match-parent
-}
+
 tbody, td, tfoot, th, thead, tr {
 	border-color: inherit;
 	border-style: solid;

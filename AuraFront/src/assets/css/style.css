@@ -1,21 +1,60 @@
-.lni-user{
+
+.form-control::placeholder {
+    color: #005478 !important;
+}
+
+.form-control{
+    color: #005478 ;
+    background-color: #ffffff;
+    border: 1px solid #005478;
+    box-shadow: none !important;
+}
+
+/* Eliminar las flechas en Chrome, Safari, Edge, Opera, y otros navegadores basados en WebKit */
+.custom-input::-webkit-outer-spin-button,
+.custom-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Propiedad estándar para la mayoría de los navegadores */
+.custom-input {
+  appearance: none;
+}
+
+.custom-modal-size {
+    max-width: 100%;
+    width: 450px;
+}
+
+.custom-modal-height {
+    height: 400px;
+}
+
+.modal-header,
+.modal-body,
+.modal-footer {
+    border: none;
+}
+
+.lni-user {
     font-size: 3rem;
 }
 
-.title-course{
+.title-course {
     height: 200px;
 }
 
 .curso-card {
-    height: 300px; 
-    width: 300px; 
+    height: 300px;
+    width: 300px;
     display: flex;
-    flex-direction: column; 
-    justify-content: flex-start; 
-    align-items: center; 
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
 }
 
-.card-animation{
+.card-animation {
     transition-property: transform;
     transition-duration: 0.2s;
 }
@@ -24,7 +63,7 @@
     transform: scale(1.2);
 }
 
-.card-anima{
+.card-anima {
     transition-property: transform;
     transition-duration: 0.2s;
 }
@@ -33,7 +72,7 @@
     transform: scale(1.1);
 }
 
-.card-ani{
+.card-ani {
     transition-property: transform;
     transition-duration: 0.2s;
 }
@@ -42,7 +81,7 @@
     transform: scale(1.05);
 }
 
-.card-a{
+.card-a {
     transition-property: transform;
     transition-duration: 0.2s;
 }
@@ -53,20 +92,20 @@
 
 .card-t {
     font-size: 1.2rem;
-    margin-bottom: 10px; 
-    margin-top: 10px; 
+    margin-bottom: 10px;
+    margin-top: 10px;
 }
 
 .icon-course {
     color: #005478;
     font-size: 100px;
     display: flex;
-    justify-content: center; 
-    align-items: center; 
-    margin-top: 50px; 
+    justify-content: center;
+    align-items: center;
+    margin-top: 50px;
 }
 
-.curso-titu{
+.curso-titu {
     font-size: 3rem;
 }
 
@@ -85,12 +124,12 @@
 .toggle-button {
     position: relative;
     display: inline-block;
-    width: 40px; 
-    height: 20px; 
+    width: 40px;
+    height: 20px;
 }
 
 .toggle-button input {
-    opacity: 0; 
+    opacity: 0;
     width: 0;
     height: 0;
 }
@@ -102,53 +141,53 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: #ccc; 
-    transition: .4s; 
+    background-color: #ccc;
+    transition: .4s;
     border-radius: 34px;
 }
 
 .slider:before {
     position: absolute;
     content: "";
-    height: 12px; 
-    width: 12px; 
+    height: 12px;
+    width: 12px;
     left: 4px;
-    bottom: 4px; 
-    background-color: white; 
-    border-radius: 50%; 
-    transition: .4s; 
+    bottom: 4px;
+    background-color: white;
+    border-radius: 50%;
+    transition: .4s;
 }
 
-input:checked + .slider {
+input:checked+.slider {
     background-color: #2b2424;
 }
 
-input:checked + .slider:before {
-    transform: translateX(20px); 
+input:checked+.slider:before {
+    transform: translateX(20px);
 }
 
 .custom-btn {
     background: transparent !important;
-    border: none !important; 
-    color: #005478 !important; 
-    margin-right: 10px; 
+    border: none !important;
+    color: #005478 !important;
+    margin-right: 10px;
     padding: 5px 10px;
     cursor: pointer;
 }
 
-input[type="radio"]:checked + .custom-btn {
-    border: 1px solid #005478 !important; 
+input[type="radio"]:checked+.custom-btn {
+    border: 1px solid #005478 !important;
     color: #005478 !important;
-    font-weight: bold; 
+    font-weight: bold;
 }
 
 .custom-btn:hover {
-    color: #000000 !important; 
+    color: #000000 !important;
 }
 
 .icon-acc {
     color: #005478;
-    font-size: 22px; 
+    font-size: 22px;
 }
 
 .card-curso {
@@ -157,8 +196,8 @@ input[type="radio"]:checked + .custom-btn {
     cursor: pointer;
     display: flex;
     flex-direction: column;
-    aspect-ratio: 1; 
-    width: 300px; 
+    aspect-ratio: 1;
+    width: 300px;
     max-width: 300%;
     margin: 5px;
 }
@@ -179,7 +218,7 @@ input[type="radio"]:checked + .custom-btn {
 }
 
 .card-tit {
-    margin: 0; 
+    margin: 0;
 }
 
 .card-foot {
@@ -189,7 +228,7 @@ input[type="radio"]:checked + .custom-btn {
 }
 
 .day-header {
-    width: 150px; 
+    width: 150px;
     text-align: center;
     vertical-align: middle;
 }
@@ -204,7 +243,7 @@ input[type="radio"]:checked + .custom-btn {
 }
 
 .headerLog {
-    background-color: #000; 
+    background-color: #000;
     padding-top: 5%;
     display: flex;
     justify-content: space-between;
@@ -441,7 +480,7 @@ ion-icon {
 .sidebar-wrapper .metismenu a:hover {
     color: #005478;
     text-decoration: none;
-    background-color: rgb(146 62 185 / 10%);
+    background-color: rgb(0 84 120 / 10%);
 }
 
 .menu-label {
@@ -595,10 +634,11 @@ ion-icon {
 }
 
 .top-header .navbar .searchbar .form-control:focus {
-    background-color: #fff;
-    border-color: #7b9ce4;
-    box-shadow: 0 0 0 .25rem rgba(56, 120, 194, 0.61)
+    background-color: #e0f2ff;
+    border-color: #005478;
+    box-shadow: 0 0 0 .25rem rgba(0, 179, 255, 0.25) !important;
 }
+
 
 .top-header .navbar .top-navbar-right .nav-item {
     display: flex;
@@ -977,6 +1017,22 @@ ion-icon {
     color: #ffff;
 }
 
+.btn-cancel {
+    background-color: #4c6068 !important;
+    color: #ffff;
+    border: 1px solid #4c6068;
+}
+
+.btn-cancel:hover {
+    background-color: #35535f !important;
+    color: #ffff;
+}
+
+.btn-accept:hover {
+    background-color: #1299d3 !important;
+    color: #ffff;
+}
+
 .btn i,
 .btn ion-icon {
     vertical-align: middle;
@@ -987,18 +1043,18 @@ ion-icon {
 }
 
 .btn-register {
-    display: flex;  
-    justify-content: center;  
-    align-items:center;
-    width: 40px; 
-    height: 40px; 
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 40px;
+    height: 40px;
     background: transparent !important;
     border: 1px solid #005478 !important;
     border-radius: 10px;
     color: #005478 !important;
-    font-size: 20px; 
+    font-size: 20px;
     cursor: pointer;
-    transition: all 0.3s ease; 
+    transition: all 0.3s ease;
 }
 
 .btn-register:hover {
@@ -1195,25 +1251,17 @@ ion-icon {
 }
 
 .card-detail {
-    position: relative; 
-    width: 100%; 
-    max-width: 800px; 
+    position: relative;
+    width: 100%;
+    max-width: 800px;
     height: 800px;
 }
 
-.profile-cover {
-    background-image: url(../images/cards/profile-cover.png);
-    background-size: cover;
-    background-position: center;
-    width: 100%;
-    height: 400px;
-}
-
 .user-profile-avatar {
-    position: absolute; 
-    top: 50%; 
-    left: 50%; 
-    transform: translate(-50%, -50%); 
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
     display: flex;
     justify-content: center;
     align-items: center;
@@ -1221,14 +1269,7 @@ ion-icon {
     width: 200px;
     height: 200px;
     padding: 5px;
-    border-radius: 10%; 
-}
-
-.user-profile-avatar img {
-    width: 100%;
-    height: 100%;
-    border-radius: 10%; 
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); 
+    border-radius: 10%;
 }
 
 .user-change-photo {
@@ -1256,7 +1297,7 @@ ion-icon {
     font-size: 1.25rem;
     font-weight: bold;
     text-align: center;
-    margin-bottom: 0.5rem; 
+    margin-bottom: 0.5rem;
 }
 
 .seccion-curso {
@@ -1637,32 +1678,6 @@ ul.categories-list li {
 .login-cover-wrapper {
     width: 25rem;
     height: 46rem;
-    margin: auto;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.login-cover-img {
-    background-image: url(../images/authentication/au-sign-up-basic.png);
-    background-position: center;
-    background-size: cover;
-    width: 100%;
-    transform: skewX(-10deg);
-}
-
-.au-reset-password-cover {
-    background-image: url(../images/authentication/au-reset-password-cover.png);
-    background-position: center;
-    background-size: cover;
-    width: 100%;
-    transform: skewX(-10deg);
-}
-
-
-.reset-passowrd {
-    width: auto;
-    height: 35em;
     margin: auto;
     display: flex;
     align-items: center;

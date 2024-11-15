@@ -169,7 +169,7 @@ const CourseStats = () => {
                             <span className="ms-2">Alumno</span>
                         </div>
                     </div>
-                    <hr className="my-4" />
+                    <hr className="my-3" />
 
                     {showOptions && (
                         <div className="d-flex align-items-center justify-content-between mt-4">

@@ -230,3 +230,26 @@ export const registrarAsistencia = async (data) => {
     throw new Error(error.message || 'Error al conectarse con el servidor');
   }
 };
+
+export const DetenerRegistroAsistencia = async () => {
+  try {
+    const response = await fetch(`${API_URL}/recognition/stop`, {
+      method: 'POST',
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Error : ${response.status} - ${errorText}`);
+    }
+
+    const responseData = await response.json();
+
+    if (responseData.message === 'Reconocimiento interrumpido correctamente.') {
+      return "Reconocimiento interrumpido correctamente.";
+    } else {
+      throw new Error('Error al interrumpir asistencia');
+    }
+  } catch (error) {
+    throw new Error(error.message || 'Error al conectarse con el servidor');
+  }
+};
